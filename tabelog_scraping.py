@@ -57,34 +57,36 @@ max_count = int(elems[2].text)
 max_page = math.ceil(max_count / 20)
 
 #ページ手動設定(テスト用)
-#max_page = 2
+max_page = 2
 
 page_count = 1
 shop_links = []
+print("全" + str(max_count) + "件中" + str(max_page) + "ページ分URLを取得します")
 while page_count < max_page:
+    print(str(page_count) + "/" + str(max_page) + "ページ目処理中")
     current_url = browser.current_url
     res = requests.get(current_url)
     soup = BeautifulSoup(res.text, "html.parser")
     elems = soup.select('a[class="list-rst__rst-name-target cpy-rst-name"]')
-    
     for elem in elems:
         shop_links.append(elem.get("href"))
     browser.find_element_by_class_name("c-pagination__arrow--next").click()
     page_count += 1
 else:
+    print(str(page_count) + "/" + str(max_page) + "ページ目処理中")
     current_url = browser.current_url
     res = requests.get(current_url)
     soup = BeautifulSoup(res.text, "html.parser")
     elems = soup.select('a[class="list-rst__rst-name-target cpy-rst-name"]')
-    
     for elem in elems:
         shop_links.append(elem.get("href"))
-        
     browser.quit()
 
 #取得した店舗詳細ページへアクセスしデータを抽出しdfに格納後Excelへはきだし
 tabelog_list = []
 for shop_link in shop_links:
+    count = shop_links.index(shop_link) + 1
+    print(str(count) + "/" + str(len(shop_links)) + "件目データ取得中")
     res = requests.get(shop_link)
     soup = BeautifulSoup(res.text, "html.parser")
     shop_name = soup.find('div', class_='rstinfo-table__name-wrap').text
@@ -104,5 +106,7 @@ for shop_link in shop_links:
 
 browser.quit()
 
+print("Excelへデータの書き込みを開始します")
 df = pd.DataFrame(tabelog_list, columns = ["店名", "評価点", "営業時間", "定休日", "電話番号", "住所"])
 df.to_excel(sa + sk + "店舗情報.xlsx", index = False)
+print("処理を完了しました")

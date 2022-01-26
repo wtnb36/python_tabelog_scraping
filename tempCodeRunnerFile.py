@@ -61,38 +61,37 @@ max_page = 2
 
 page_count = 1
 shop_links = []
+print("全" + str(max_count) + "件中" + str(max_page) + "ページ分URLを取得します")
 while page_count < max_page:
+    print(str(page_count) + "/" + str(max_page) + "ページ目処理中")
     current_url = browser.current_url
     res = requests.get(current_url)
     soup = BeautifulSoup(res.text, "html.parser")
     elems = soup.select('a[class="list-rst__rst-name-target cpy-rst-name"]')
-    
     for elem in elems:
         shop_links.append(elem.get("href"))
     browser.find_element_by_class_name("c-pagination__arrow--next").click()
     page_count += 1
 else:
+    print(str(page_count) + "/" + str(max_page) + "ページ目処理中")
     current_url = browser.current_url
     res = requests.get(current_url)
     soup = BeautifulSoup(res.text, "html.parser")
     elems = soup.select('a[class="list-rst__rst-name-target cpy-rst-name"]')
-    
     for elem in elems:
         shop_links.append(elem.get("href"))
-        
     browser.quit()
 
 #取得した店舗詳細ページへアクセスしデータを抽出しdfに格納後Excelへはきだし
 tabelog_list = []
 for shop_link in shop_links:
+    count = shop_links.index(shop_link) + 1
+    print(str(count) + "/" + str(len(shop_links)) + "件目データ取得中")
     res = requests.get(shop_link)
     soup = BeautifulSoup(res.text, "html.parser")
     shop_name = soup.find('div', class_='rstinfo-table__name-wrap').text
     shop_name = shop_name.replace('\n', "")
-    #print(shop_name)
     score = soup.find('span', class_='rdheader-rating__score-val-dtl').text
-    #print(score)
-    #business_hours = soup.find_all('p', class_='rstinfo-table__subject')
     business_hours_list = []
     elems = soup.find_all('p', class_='rstinfo-table__subject-text')
     for elem in elems:
@@ -101,16 +100,13 @@ for shop_link in shop_links:
         else:
             business_hours_list.append(elem.text)
             business_hours = ''.join(business_hours_list)
-    #print(business_hours)
-    #print(holiday)
     tel = soup.find('strong', class_='rstinfo-table__tel-num').text
-    #print(tel)
     address = soup.find('p', class_='rstinfo-table__address').text
-    #print(address)
     tabelog_list.append([shop_name, score, business_hours, holiday, tel, address])
-    #print(tabelog_list)
 
 browser.quit()
 
+print("Excelへデータの書き込みを開始します")
 df = pd.DataFrame(tabelog_list, columns = ["店名", "評価点", "営業時間", "定休日", "電話番号", "住所"])
 df.to_excel(sa + sk + "店舗情報.xlsx", index = False)
+print("処理を完了しました")
